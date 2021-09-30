@@ -14,7 +14,7 @@
 <p id="test"></p>
 
 
-<script src="/socket.io/socket.io.js"></script>
+<script src="http://athish-e2e-chat-app.herokuapp.com/socket.io/socket.io.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/aes.js"></script>
 
 <script type="text/javascript">
@@ -39,12 +39,7 @@
     //     }
 
 
-    const protocol = window.location.protocol;
-    const domain = window.location.hostname;
-    const port = window.location.port;
-    const site = `${protocol}://${domain}:${port ? port : ""}`
-    console.log(site)
-
+    const site = window.location.origin
 
     document.getElementById('test').innerHTML = site
     const socket = io(site)
