@@ -43,6 +43,11 @@ app.use('/', require('./routes'));
 const http = require('http').createServer(app)
 const io = require('socket.io')(http)
 
+io.configure(function () {
+    io.set("transports", ["xhr-polling"])
+    io.set("polling duration", 10)
+})
+
 io.on("connection", client => {
 
     client.on('send-message', ({messageObj, receiver}) => {

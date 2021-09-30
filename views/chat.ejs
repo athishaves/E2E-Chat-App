@@ -39,7 +39,11 @@
     //     }
 
 
-    const site = "http://" + window.location.hostname + ":8000"
+    const protocol = window.location.protocol;
+    const domain = window.location.hostname;
+    const port = window.location.port;
+    const site = `${protocol}://${domain}:${port ? port : ""}`
+    console.log(site)
 
 
     document.getElementById('test').innerHTML = site
