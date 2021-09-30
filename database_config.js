@@ -2,6 +2,7 @@
 
 const mysql = require('mysql')
 
+
 const con = mysql.createPool({
     connectionLimit: 10, // default = 10
     host: process.env.DATABASE_HOST,
