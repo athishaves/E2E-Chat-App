@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS user (
+    username VARCHAR(255), 
+    password CHAR(32) NOT NULL, 
+    publickey CHAR(88) NOT NULL,
+    privatekey CHAR(80) NOT NULL,
+    PRIMARY KEY(username)
+);
+
+
+-- Trigger
+
+DELIMITER $$
+
+CREATE FUNCTION verifyUser (name VARCHAR(255), password CHAR(32), targetName VARCHAR(255), targetPass CHAR(32))
+RETURNS BOOLEAN
+DETERMINISTIC
+    BEGIN
+        RETURN (name = targetName) AND (password = targetPass);
+    END
+$$
+
+DELIMITER ;

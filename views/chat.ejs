@@ -1,0 +1,269 @@
+<h1><%= friend %></h1>
+<h5 id="typing" style="text-decoration-color: greenyellow;">Online</h5>
+
+<div id="msg-container"></div>
+<input onkeypress="isTyping()" type="text" id="chat-input" placeholder="Enter a Message" autofocus />
+<button onclick="sendMessage()">SEND</button>
+
+
+<p id="chat-user" hidden><%= user %></p>
+<p id="chat-friend" hidden><%= friend %></p>
+<p id="secret-key" hidden><%= key %></p>
+
+
+<p id="test"></p>
+
+
+<script src="http://localhost:8000/socket.io/socket.io.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/aes.js"></script>
+
+<script type="text/javascript">
+
+    const TYPE = {
+        SENDER : 1,
+        RECEIVER : 2,
+        BOT : 3
+    }
+
+
+    const KEYBOARD = {
+        TYPING : true,
+        IDLE : false
+    }
+
+
+    // const messageObj = {
+    //         message: msgBox.value,
+    //         date: date,
+    //         time: time
+    //     }
+
+
+    const site = "http://" + window.location.hostname + ":8000"
+
+
+    document.getElementById('test').innerHTML = site
+    const socket = io(site)
+
+
+    const user = document.getElementById('chat-user').innerHTML
+    const friend = document.getElementById('chat-friend').innerHTML
+
+
+
+    const key = document.getElementById('secret-key').innerHTML
+
+    const chatId = JSON.stringify([user, friend].sort())
+    const storageId = "EncryptedChatApp" + ":" + user + chatId
+
+    var messageObject = JSON.parse(localStorage.getItem(storageId))
+
+
+    function initialPopulate () {
+        if (messageObject !== null) {
+            for (let index = 0; index < messageObject.length; index++) {
+                const obj = messageObject[index]
+
+                if (obj['encrypt'] == true) {
+                    const decMessage = JSON.parse(decrypt(obj.message, key))
+                    appendMessage(decMessage['message'], obj['type'], decMessage['date'], decMessage['time'])
+                }
+                else appendMessage(obj['message'], obj['type'], obj['date'], obj['time'])
+            }
+        }
+    }
+
+
+    socket.on(chatId, ({ messageObj }) => {
+        addToStorage(messageObj, TYPE.RECEIVER)
+
+        const decMessage = decrypt(messageObj, key)
+        const message = JSON.parse(decMessage)
+
+        appendMessage(message['message'], TYPE.RECEIVER, message['date'], message['time'])
+    })
+
+
+    const typingStatusElement = document.getElementById('typing')
+
+
+
+    function addToStorage (messageObj, type) {
+        if (!messageObject) {
+            messageObject = []
+
+            messageObject.push({ message : "Your chat with " + friend + " is E2E encrypted", type : TYPE.BOT, encrypt: false })
+            appendMessage("Your chat with " + friend + " is E2E encrypted", TYPE.BOT)
+
+            messageObject.push({ message: "You can check your secret key at the other end", type: TYPE.BOT, encrypt : false })
+            appendMessage("You can check your secret key at the other end", TYPE.BOT)
+
+            messageObject.push({ message: "Secret Key : " + key, type: TYPE.BOT, encrypt: false })
+            appendMessage("Secret Key : " + key, TYPE.BOT)
+        }
+
+        messageObject.push({ message : messageObj, type : type, encrypt : true })
+
+        localStorage.setItem(storageId, JSON.stringify(messageObject))
+    }
+
+
+
+    const msgBox = document.getElementById('chat-input')
+
+    // For todays date
+    Date.prototype.today = function () {
+        return ((this.getDate() < 10) ? "0" : "") + this.getDate() + "/" + (((this.getMonth() + 1) < 10) ? "0" : "") + (this.getMonth() + 1) + "/" + this.getFullYear();
+    }
+
+    // For the time now
+    Date.prototype.timeNow = function () {
+        return ((this.getHours() < 10) ? "0" : "") + this.getHours() + ":" + ((this.getMinutes() < 10) ? "0" : "") + this.getMinutes() + ":" + ((this.getSeconds() < 10) ? "0" : "") + this.getSeconds();
+    }
+
+    const sendMessage = () => {
+        const temp = new Date()
+        const date = temp.today()
+        const time = temp.timeNow()
+
+        const messageObj = JSON.stringify({
+            message: msgBox.value,
+            date: date,
+            time: time
+        })
+
+        const encMessage = encrypt(messageObj, key)
+
+        socket.emit('send-message', {
+            messageObj : encMessage,
+            receiver : chatId
+        })
+
+        addToStorage(encMessage, TYPE.SENDER)
+        appendMessage(msgBox.value, TYPE.SENDER, date, time)
+
+        msgBox.value = ''
+    }
+
+
+
+
+
+    var typing = KEYBOARD.IDLE
+    var timeout = undefined
+    const typingDelay = 1000
+    const typingRoom = chatId + 'typing'
+
+
+    function isTyping () {
+
+        if (typing == KEYBOARD.IDLE) {
+            typing = KEYBOARD.TYPING
+            socket.emit('typing', { status : KEYBOARD.TYPING, receiver : typingRoom })
+            timeout = setTimeout(notTyping, typingDelay);
+
+        } else {
+            clearTimeout(timeout);
+            timeout = setTimeout(notTyping, typingDelay);
+        }
+    }
+
+
+    function notTyping () {
+        typing = KEYBOARD.IDLE;
+        socket.emit('typing', { status : KEYBOARD.IDLE, receiver : typingRoom });
+    }
+
+    socket.on(typingRoom, (status) => {
+        if (status === KEYBOARD.TYPING) typingStatusElement.innerHTML = "Typing"
+        else if (status === KEYBOARD.IDLE) typingStatusElement.innerHTML = "Online"
+    })
+
+
+
+    const messageContainer = document.getElementById('msg-container')
+
+    const messageAttributes = { padding: '5px', margin: '5px' }
+
+    const botMessageAttr = { align: 'center' }
+    const botStyleAttr = { backgroundColor: "FF0000" }
+
+    const senderMessageAttr = { align: 'right' }
+    const senderStyleAttr = { backgroundColor: "00FF00" }
+
+    const receiverMessageAttr = { align: 'left' }
+    const receiverStyleAttr = { backgroundColor: "FFFFFF" }
+
+
+    function appendMessage(message, type, date, time) {
+
+        if (type === TYPE.BOT) {
+            messageContainer.append(
+                getMessageElement(message, null, messageAttributes, botMessageAttr, botStyleAttr)
+            )
+
+        } else if (type === TYPE.SENDER) {
+            messageContainer.append(
+                getMessageElement(message, getTimeElement(date, time), messageAttributes, senderMessageAttr, senderStyleAttr)
+            )
+
+        } else if (type === TYPE.RECEIVER) {
+            messageContainer.append(
+                getMessageElement(message, getTimeElement(date, time), messageAttributes, receiverMessageAttr, receiverStyleAttr)
+            )
+
+        }
+        
+    }
+
+
+
+    function getMessageElement (message, child, commonAttr, specialAttr, styleAttr) {
+        const element = document.createElement('div')
+
+        for (let key in commonAttr)
+            element[key] = commonAttr[key]
+
+        for (let key in specialAttr)
+            element[key] = specialAttr[key]
+
+        for (let key in styleAttr) {
+            element.style[key] = styleAttr[key]
+        }
+        
+        const messageBox = document.createElement('p')
+        messageBox.innerHTML = message
+        element.append(messageBox)
+
+        if (child !== null) element.append(child)
+
+        return element
+    }
+
+    function getTimeElement (date, time) {
+        const element = document.createElement('p')
+        element.innerHTML = date + " " + time
+        return element
+    }
+
+
+
+
+    function encrypt(message = '', key) {
+        var message = CryptoJS.AES.encrypt(message, key);
+        return message.toString();
+    }
+
+    function decrypt(message = '', key) {
+        var code = CryptoJS.AES.decrypt(message, key);
+        return code.toString(CryptoJS.enc.Utf8);
+    }
+
+
+
+
+    // Populate old chats
+
+    initialPopulate()
+
+</script>

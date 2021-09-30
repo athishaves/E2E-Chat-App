@@ -1,0 +1,23 @@
+<% if ( typeof message !== 'undefined' ) { %>
+    <p>Message : <%= message %></p>
+<% } %>
+
+<% if ( typeof error !=='undefined' ) { %>
+    <p style="color:#F00;">Error : <%= error %></p>
+<% } %>
+
+<h1> Login </h1>
+
+<form action="/login" method="POST">
+    <div>
+        <label for="username">Username</label>
+        <input type="username" name="username" placeholder="Enter Username" autofocus />
+    </div>
+    <div>
+        <label for="password">Password</label>
+        <input type="password" name="password" placeholder="Enter Password" />
+    </div>
+    <button type="submit" class="btn btn-primary btn-block">Login</button>
+
+</form>
+<p>Don't have an account yet? <a href="/register">Register</a></p>

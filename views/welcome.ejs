@@ -1,0 +1,21 @@
+<h3>Hello <%= user %></h3>
+
+<% if (users && users.length != 0) { %>
+    <% for (let i=0; i<users.length; i++) { %>
+
+        <% users[i].publickey = encodeURI(users[i].publickey) %>
+
+        <% users[i].publickey = users[i].publickey.replace(/[/]/g, '%2F') %>
+
+        <% if (user !== users[i].username) { %>
+            <p>
+                <a href="/chat/<%= users[i].username %>/<%= users[i].publickey %>">
+                    <%= users[i].username %>
+                </a>
+            </p>
+        <% } %>
+
+    <% } %>
+<% } %>
+
+<a href=/logout><input type=button value='Logout'></a>

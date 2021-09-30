@@ -1,0 +1,27 @@
+{
+  "name": "e2e_chat",
+  "version": "1.0.0",
+  "description": "A demo chat app with basic implementation of chatting feature where chats are e2e encrypted. The keys are transfered using Diefiel-Helman algorithm.",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Athish Venkatesh",
+  "license": "ISC",
+  "dependencies": {
+    "aes256": "^1.1.0",
+    "body-parser": "^1.19.0",
+    "crypto": "^1.0.1",
+    "ejs": "^3.1.6",
+    "express": "^4.17.1",
+    "express-session": "^1.17.2",
+    "http": "^0.0.1-security",
+    "mysql": "^2.18.1",
+    "node-cache": "^5.1.2",
+    "socket.io": "^4.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^16.9.1"
+  }
+}
